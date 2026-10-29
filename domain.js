@@ -30,7 +30,7 @@ const CATALOGUE = [
 const ISSUES = {
   defect: {
     label: 'Product faulty or damaged', owner: 'Product quality',
-    keywords: ['leak', 'broke', 'broken', 'damaged', 'stopped working', 'stops working', 'not charging', "won't charge", 'faulty', 'cracked', 'torn', 'defect', 'missing', 'dead', 'battery'],
+    keywords: ['leak', 'broke', 'broken', 'damaged', 'stopped working', 'stops working', 'not charging', "won't charge", 'faulty', 'cracked', 'torn', 'defect', 'missing', 'dead', 'battery', '坏', '破', '漏', '裂', '不工作', '充不上', '充不进', '没电', '故障', '缺'],
     questions: [
       { key: 'batch', label: 'Batch or lot code', hint: 'Usually printed near the barcode, for example 2304A1', type: 'text', required: true },
       { key: 'photo', label: 'Photo of the product and the problem', hint: 'Saves you sending it later', type: 'photo', required: false },
@@ -41,7 +41,7 @@ const ISSUES = {
   },
   safety: {
     label: 'Skin reaction or safety concern', owner: 'Product safety',
-    keywords: ['rash', 'irritat', 'allerg', 'burn', 'itch', 'swallow', 'reaction', 'sore', 'red skin', 'hospital', 'doctor'],
+    keywords: ['rash', 'irritat', 'allerg', 'burn', 'itch', 'swallow', 'reaction', 'sore', 'red skin', 'hospital', 'doctor', '过敏', '红疹', '皮疹', '痒', '刺痛', '烧', '误食', '医院'],
     questions: [
       { key: 'urgent', label: 'Does anyone need medical help right now?', type: 'choice', options: ['No', 'Yes'], required: true },
       { key: 'who', label: 'Who was affected?', type: 'choice', options: ['Me', 'A child', 'Someone else'], required: true },
@@ -52,7 +52,7 @@ const ISSUES = {
   },
   usage: {
     label: 'How to use the product', owner: 'Content and guidance',
-    keywords: ['how do i', 'how to', 'instructions', 'setting', 'mode', 'app', 'bluetooth', 'pair', 'not cleaning', "doesn't work well", 'which one', 'dose', 'how much'],
+    keywords: ['how do i', 'how to', 'instructions', 'setting', 'mode', 'app', 'bluetooth', 'pair', 'not cleaning', "doesn't work well", 'which one', 'dose', 'how much', '怎么', '如何', '用法', '连接', '蓝牙', '设置'],
     questions: [
       { key: 'tried', label: 'What have you tried so far?', type: 'text', required: false },
       { key: 'model', label: 'Model or variant, if shown on the pack', type: 'text', required: false },
@@ -61,7 +61,7 @@ const ISSUES = {
   },
   order: {
     label: 'Online order, delivery or refund', owner: 'Direct-to-consumer operations',
-    keywords: ['order', 'delivery', 'delivered', 'shipped', 'tracking', 'subscription', 'refund', 'charged', 'parcel', 'courier'],
+    keywords: ['order', 'delivery', 'delivered', 'shipped', 'tracking', 'subscription', 'refund', 'charged', 'parcel', 'courier', '订单', '快递', '物流', '退款', '扣款', '订阅', '没收到'],
     questions: [
       { key: 'order_no', label: 'Order number', hint: 'From your confirmation email, for example PG-104233', type: 'text', required: true },
       { key: 'consent_dtc', label: 'Let the advisor see this order so you do not have to explain it again?', type: 'consent', required: false },
@@ -70,7 +70,7 @@ const ISSUES = {
   },
   offer: {
     label: 'Coupon, offer or rewards', owner: 'Brand marketing',
-    keywords: ['coupon', 'voucher', 'promo', 'offer', 'rewards', 'points', 'cashback', 'discount'],
+    keywords: ['coupon', 'voucher', 'promo', 'offer', 'rewards', 'points', 'cashback', 'discount', '优惠券', '优惠码', '折扣', '积分', '返现'],
     questions: [
       { key: 'offer', label: 'Which offer or code?', type: 'text', required: true },
     ],
@@ -78,7 +78,7 @@ const ISSUES = {
   },
   availability: {
     label: 'Cannot find or discontinued', owner: 'Brand and supply',
-    keywords: ['can\'t find', 'cannot find', 'discontinued', 'out of stock', 'no longer', 'stopped selling', 'where to buy', 'available'],
+    keywords: ['can\'t find', 'cannot find', 'discontinued', 'out of stock', 'no longer', 'stopped selling', 'where to buy', 'available', '买不到', '停产', '缺货', '哪里买'],
     questions: [
       { key: 'area', label: 'Town or postcode area', type: 'text', required: false },
       { key: 'retailer', label: 'Where do you usually buy it?', type: 'text', required: false },

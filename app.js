@@ -109,6 +109,7 @@ function viewHome() {
 }
 
 // ---------- consumer: get help ----------
+const MIN_TEXT = 4;
 function viewHelp() {
   const st = { country: 'UK', brand: '', product: '', text: '', issueType: null, detected: null, prefill: {}, answers: {}, photo: null, barcode: null, name: '', email: '', override: false };
   const mine = myCases();
@@ -150,9 +151,13 @@ function viewHelp() {
   prodSel.onchange = () => { st.product = prodSel.value; gate(); };
 
   let ct;
-  $('#text').oninput = e => { st.text = e.target.value; clearTimeout(ct); ct = setTimeout(classify, 350); gate(); };
+  $('#text').oninput = e => { st.text = e.target.value; clearTimeout(ct); ct = setTimeout(classify, st.text.trim().length < MIN_TEXT ? 0 : 350); gate(); };
   async function classify() {
-    if (st.text.trim().length < 8) { $('#detect').innerHTML = ''; st.issueType = null; drawQs(); gate(); return; }
+    const n = st.text.trim().length;
+    if (n < MIN_TEXT) {
+      $('#detect').innerHTML = n ? `<span class="hint">Keep going: a few words about the problem (${MIN_TEXT - n} more character${MIN_TEXT - n === 1 ? '' : 's'}) and we will show the next questions.</span>` : '';
+      st.issueType = null; drawQs(); gate(); return;
+    }
     const r = await api('/api/classify', { text: st.text, issueType: st.override ? st.issueType : undefined });
     st.issueType = r.issueType; st.prefill = r.prefill;
     $('#detect').innerHTML = `We will treat this as <select id="itype" aria-label="Issue type" style="width:auto;padding:4px 8px">${Object.entries(META.issues).map(([k, v]) => `<option value="${k}" ${k === st.issueType ? 'selected' : ''}>${esc(v.label)}</option>`).join('')}</select>`;
@@ -198,7 +203,7 @@ function viewHelp() {
 
   function missing() {
     if (!st.brand || !st.product) return 'Choose the brand and product.';
-    if (st.text.trim().length < 8) return 'Tell us what happened.';
+    if (st.text.trim().length < MIN_TEXT) return 'Describe the problem in step 2 first.';
     const req = (META.issues[st.issueType]?.questions || []).filter(q => q.required && !st.prefill[q.key] && !st.answers[q.key]);
     if (req.length) return `Still needed: ${req.map(q => q.label.toLowerCase()).join(', ')}.`;
     if (!st.name) return 'Add your name.';
