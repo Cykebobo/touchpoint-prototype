@@ -138,7 +138,7 @@ function deriveThemes(c, now) {
   if ((c.promises || []).some(p => p.overdueAt)) th.add('followup_missed');
   if (c.closedReason === 'consumer_silent') th.add('consumer_silent');
   if (c.rating >= 4) th.add('positive');
-  const t = caseText(c).toLowerCase();
+  const t = caseText(c).toLowerCase().replace(/(did not|didn't|never|no need to|without having to) (have to |need to )?(repeat|explain)[^.!?]*/g, '');
   if (/(already (told|sent|gave|explained)|repeat (myself|everything)|third time|explain(ed)? (it |this )?again|asked (me )?again)/.test(t)) th.add('repeat_info');
   return [...th].filter(k => k !== 'other');
 }
