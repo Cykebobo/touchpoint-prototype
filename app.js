@@ -120,16 +120,16 @@ function viewHelp() {
       <label class="f"><span>Brand</span><select id="brand"></select></label>
       <label class="f" style="margin:0"><span>Product</span><select id="product"></select></label>
     </div>
-    <div class="step dim" id="s2"><h2><i>2</i>What happened?</h2>
+    <div class="step" id="s2"><h2><i>2</i>What happened?</h2>
       <label class="f" style="margin:0"><span class="sr" style="display:none">Description</span><textarea id="text" placeholder="For example: the charger stopped working after two weeks. Batch 2304A1." maxlength="2000"></textarea></label>
       <div class="detect" id="detect"></div>
     </div>
-    <div class="step dim" id="s3"><h2><i>3</i>A few details, asked once</h2><div id="qs"></div></div>
-    <div class="step dim" id="s4"><h2><i>4</i>How can we reach you?</h2>
+    <div class="step" id="s3"><h2><i>3</i>A few details, asked once</h2><div id="qs"></div></div>
+    <div class="step" id="s4"><h2><i>4</i>How can we reach you?</h2>
       <label class="f"><span>Your name</span><input type="text" id="name" autocomplete="name" maxlength="60"></label>
       <label class="f"><span>Email</span><input type="email" id="email" autocomplete="email" maxlength="80"><small>Updates also appear on your case page, so you can follow along without an account.</small></label>
-      <button class="btn" id="submit" disabled>Send to an advisor</button>
-      <p class="small muted" id="why" style="margin-top:8px"></p>
+      <button class="btn" id="submit">Send to an advisor</button>
+      <p class="todo" id="why" aria-live="polite"></p>
     </div>
     ${mine.length ? `<div class="mine"><h3>Your recent cases</h3>${mine.map(m => `<a href="#/track/${esc(m)}"><span>${esc(m)}</span><span class="link">View</span></a>`).join('')}</div>` : ''}
   </div>`;
@@ -201,21 +201,28 @@ function viewHelp() {
   $('#name').oninput = e => { st.name = e.target.value.trim(); gate(); };
   $('#email').oninput = e => { st.email = e.target.value.trim(); gate(); };
 
+  // What is still needed, with the field to jump to.
   function missing() {
-    if (!st.brand || !st.product) return 'Choose the brand and product.';
-    if (st.text.trim().length < MIN_TEXT) return 'Describe the problem in step 2 first.';
+    if (!st.brand) return { msg: 'Step 1: choose the brand.', el: '#brand' };
+    if (!st.product) return { msg: 'Step 1: choose the product.', el: '#product' };
+    if (st.text.trim().length < MIN_TEXT) return { msg: 'Step 2: tell us what happened.', el: '#text' };
     const req = (META.issues[st.issueType]?.questions || []).filter(q => q.required && !st.prefill[q.key] && !st.answers[q.key]);
-    if (req.length) return `Still needed: ${req.map(q => q.label.toLowerCase()).join(', ')}.`;
-    if (!st.name) return 'Add your name.';
-    return '';
+    if (req.length) return { msg: `Step 3: ${req.map(q => q.label.toLowerCase().replace(/\?$/, '')).join(', ')}.`, el: `[data-q="${req[0].key}"],[data-qc="${req[0].key}"] button` };
+    if (!st.name) return { msg: 'Step 4: add your name.', el: '#name' };
+    return null;
   }
   function gate() {
-    $('#s2').classList.toggle('dim', !(st.brand && st.product));
-    $('#s3').classList.toggle('dim', !(st.brand && st.product && st.issueType));
-    $('#s4').classList.toggle('dim', !(st.brand && st.product && st.issueType));
-    const m = missing(); $('#submit').disabled = !!m; $('#why').textContent = m;
+    const m = missing();
+    $('#why').textContent = m ? `Still to do: ${m.msg}` : 'Ready to send.';
+    $('#why').classList.toggle('ready', !m);
   }
   $('#submit').onclick = async () => {
+    const m = missing();
+    if (m) {
+      const el = $(m.el);
+      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus({ preventScroll: true }); el.classList.add('flag'); setTimeout(() => el.classList.remove('flag'), 1600); }
+      toast(m.msg); return;
+    }
     $('#submit').disabled = true;
     try {
       const c = await api('/api/cases', { country: st.country, brand: st.brand, product: st.product, description: st.text, issueType: st.issueType, answers: { ...st.prefill, ...st.answers }, photo: st.photo, barcode: st.barcode, consumer: { name: st.name, email: st.email }, channel: 'guided' });
