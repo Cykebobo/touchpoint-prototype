@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Touchpoint</title>
+<meta name="description" content="Closed-loop consumer support concept prototype">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="top">
+  <a class="mark" href="#/"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="3.5" r="2.6" fill="var(--blue)"/></svg>Touchpoint</a>
+  <nav>
+    <a href="#/help" data-nav="help">Get help</a>
+    <a href="#/desk" data-nav="desk">Advisor desk</a>
+    <a href="#/insights" data-nav="insights">Insights</a>
+  </nav>
+  <div class="clock" title="Demo clock: move time forward to watch the follow-up engine act">
+    <span id="clockText">…</span>
+    <button class="ghost sm" data-adv="4">+4h</button>
+    <button class="ghost sm" data-adv="24">+1 day</button>
+    <button class="ghost sm" id="resetBtn" title="Restore the demo data">Reset</button>
+  </div>
+</header>
+<main id="app" tabindex="-1"></main>
+<footer class="foot">Student concept prototype for BMAN24650 Integrative Team Project 2. Synthetic data only. Not affiliated with or endorsed by Procter &amp; Gamble.</footer>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="/app.js"></script>
+</body>
+</html>
