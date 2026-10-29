@@ -5,7 +5,41 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const app = $('#app');
 let META = null, NOW = Date.now(), view = null;
 
+// Two modes: with the Node server (shared data, local AI) or standalone in the browser
+// (static hosting; each visitor gets their own copy of the demo in localStorage).
+let local = null;
+const STORE_KEY = 'tp-db-v1';
+const onLocalChange = () => { clearTimeout(liveT); liveT = setTimeout(async () => { await refreshClock(); if (view?.live) view.live(); }, 250); };
+function startLocal() {
+  local = TPCore.createCore({
+    load: () => { try { return JSON.parse(localStorage.getItem(STORE_KEY)); } catch { return null; } },
+    save: db => {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); }
+      catch { // storage full: drop older photos and retry once
+        db.cases.slice(0, -3).forEach(c => { if (c.evidence) c.evidence.photo = null; });
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch {}
+      }
+    },
+    onChange: onLocalChange,
+  });
+  setInterval(local.tick, 5000);
+  const tag = $('#modeTag'); tag.hidden = false; tag.textContent = 'Demo data saved in this browser';
+}
+async function detectMode() {
+  if (/\.github\.io$/.test(location.hostname) || location.protocol === 'file:') return startLocal();
+  try {
+    const r = await fetch('/api/meta', { cache: 'no-store' });
+    if (r.ok && (r.headers.get('content-type') || '').includes('json')) return;
+  } catch {}
+  startLocal();
+}
 async function api(path, body) {
+  if (local) {
+    const u = new URL(path, 'http://x');
+    const r = await local.handle(body === undefined ? 'GET' : 'POST', u.pathname, u.searchParams, body === undefined ? {} : JSON.parse(JSON.stringify(body)));
+    if (r.status !== 200) throw new Error(r.body.error || `Request failed (${r.status})`);
+    return JSON.parse(JSON.stringify(r.body));
+  }
   const r = await fetch(path, body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || `Request failed (${r.status})`);
@@ -16,7 +50,7 @@ const H = 3600e3;
 function fmtTime(ms) { return new Date(ms).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
 function fmtDur(ms) {
   const a = Math.abs(ms), m = Math.round(a / 60e3);
-  if (m < 60) return `${m}m`;
+  if (m < 60) return `${Math.max(1, m)}m`;
   const h = Math.round(a / H);
   return h < 48 ? `${h}h` : `${Math.round(h / 24)}d`;
 }
@@ -48,10 +82,10 @@ addEventListener('hashchange', () => { render(); app.focus({ preventScroll: true
 
 // live: re-render read-only views when the server reports a change
 let liveT;
-try {
-  const es = new EventSource('/api/events');
-  es.onmessage = () => { clearTimeout(liveT); liveT = setTimeout(async () => { await refreshClock(); if (view?.live) view.live(); }, 250); };
-} catch {}
+function startLive() {
+  if (local) return;
+  try { const es = new EventSource('/api/events'); es.onmessage = onLocalChange; } catch {}
+}
 
 // ---------- home ----------
 function viewHome() {
@@ -275,7 +309,7 @@ function caseView(c) {
       ${cp.missing.length ? `<p class="small slate" style="margin-bottom:6px">Still missing:</p><div class="chips">${cp.missing.map(m => `<span class="chip late">${esc(m)}</span>`).join('')}</div>` : ''}
     </div>
     ${cp.actions.length ? `<div class="blk"><h3>Suggested next step</h3><div class="acts">${cp.actions.map((a, i) => `<button data-act="${i}" class="${a.kind === 'escalate' || a.kind === 'fulfil' ? 'warn' : ''}">${esc(a.label)}</button>`).join('')}</div></div>` : ''}
-    ${['resolved', 'closed'].includes(c.status) ? '' : `<div class="blk"><h3>Draft reply</h3><textarea id="draft" style="min-height:120px">${esc(cp.draft)}</textarea><p class="draftsrc" id="draftsrc">Template, based on the case record</p><div style="display:flex;gap:6px"><button class="ghost sm" id="useDraft">Put in reply box</button><button class="ghost sm" id="aiDraft">Rewrite with local AI</button></div></div>`}
+    ${['resolved', 'closed'].includes(c.status) ? '' : `<div class="blk"><h3>Draft reply</h3><textarea id="draft" style="min-height:120px">${esc(cp.draft)}</textarea><p class="draftsrc" id="draftsrc">Template, based on the case record</p><div style="display:flex;gap:6px"><button class="ghost sm" id="useDraft">Put in reply box</button>${local ? '' : '<button class="ghost sm" id="aiDraft">Rewrite with local AI</button>'}</div></div>`}
     <div class="blk"><h3>Promises</h3><div class="promises">${c.promises.map(p => promiseLine(p, { action: true })).join('')}</div>
       ${['resolved', 'closed'].includes(c.status) ? '' : `<div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap"><button class="ghost sm" id="newPromise">Add a promise</button><button class="ghost sm" id="routeBtn">Route to ${esc(issue.owner)}</button></div>`}
     </div>
@@ -352,4 +386,4 @@ async function viewInsights() {
   return { live: () => render() };
 }
 
-refreshClock().then(render);
+detectMode().then(() => { startLive(); return refreshClock(); }).then(render);
